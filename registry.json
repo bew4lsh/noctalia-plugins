@@ -11,7 +11,7 @@
       "license": "MIT",
       "minNoctaliaVersion": "3.6.0",
       "tags": ["Panel", "Bar", "Productivity"],
-      "repository": "https://github.com/bew4lsh/noctalia-dictionary"
+      "repository": "https://github.com/bew4lsh/noctalia-plugins"
     }
   ]
 }
