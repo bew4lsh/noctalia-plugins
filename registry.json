@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "plugins": [
+    {
+      "id": "dictionary",
+      "name": "Dictionary",
+      "version": "1.0.0",
+      "official": false,
+      "author": "lia",
+      "description": "Look up words in online dictionaries. Supports definitions, synonyms, antonyms, and rhymes with configurable URL templates.",
+      "license": "MIT",
+      "minNoctaliaVersion": "3.6.0",
+      "tags": ["Panel", "Bar", "Productivity"],
+      "repository": "https://github.com/bew4lsh/noctalia-dictionary"
+    }
+  ]
+}
