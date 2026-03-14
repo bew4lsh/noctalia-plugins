@@ -37,11 +37,6 @@ ColumnLayout {
     defaults.defaultCategory ||
     "definition"
 
-  property bool editCloseAfterLookup:
-    cfg.closeAfterLookup ??
-    defaults.closeAfterLookup ??
-    true
-
   spacing: Style.marginM
 
   // Title
@@ -116,7 +111,7 @@ ColumnLayout {
   NComboBox {
     Layout.fillWidth: true
     label: "Default Category"
-    description: "Which lookup type to select when opening the panel"
+    description: "Which lookup type to show first in results"
 
     model: [
       { key: "definition", name: "Definition" },
@@ -127,52 +122,6 @@ ColumnLayout {
 
     currentKey: root.editDefaultCategory
     onSelected: key => root.editDefaultCategory = key
-  }
-
-  NToggle {
-    Layout.fillWidth: true
-    label: "Close After Lookup"
-    description: "Automatically close the panel after opening a URL"
-    checked: root.editCloseAfterLookup
-    onToggled: checked => root.editCloseAfterLookup = checked
-  }
-
-  // Keybind info
-  NDivider {
-    Layout.fillWidth: true
-    Layout.topMargin: Style.marginM
-    Layout.bottomMargin: Style.marginM
-  }
-
-  NLabel {
-    label: "Keybind Setup"
-    description: "To toggle the dictionary panel with a keyboard shortcut, add this to your compositor config:"
-  }
-
-  Rectangle {
-    Layout.fillWidth: true
-    Layout.preferredHeight: commandText.implicitHeight + Style.marginS * 2
-    color: Color.mSurfaceVariant
-    radius: Style.radiusS
-
-    NText {
-      id: commandText
-      anchors.fill: parent
-      anchors.margins: Style.marginS
-      text: "qs -c \"noctalia-shell\" ipc call plugin:dictionary toggle"
-      font.family: "monospace"
-      pointSize: Style.fontSizeS
-      color: Color.mPrimary
-      wrapMode: Text.WrapAnywhere
-    }
-  }
-
-  NText {
-    Layout.fillWidth: true
-    text: "Niri: Mod+Shift+D { spawn \"qs\" \"-c\" \"noctalia-shell\" \"ipc\" \"call\" \"plugin:dictionary\" \"toggle\"; }"
-    color: Color.mOnSurfaceVariant
-    pointSize: Style.fontSizeXS
-    wrapMode: Text.WordWrap
   }
 
   // Bottom spacing
@@ -188,7 +137,6 @@ ColumnLayout {
     pluginApi.pluginSettings.antonymsUrl = root.editAntonymsUrl;
     pluginApi.pluginSettings.rhymesUrl = root.editRhymesUrl;
     pluginApi.pluginSettings.defaultCategory = root.editDefaultCategory;
-    pluginApi.pluginSettings.closeAfterLookup = root.editCloseAfterLookup;
 
     pluginApi.saveSettings();
   }

@@ -1,28 +1,26 @@
 {
   "id": "dictionary",
   "name": "Dictionary",
-  "version": "1.0.0",
-  "minNoctaliaVersion": "3.6.0",
+  "version": "2.0.0",
+  "minNoctaliaVersion": "3.9.0",
   "author": "lia",
   "license": "MIT",
   "description": "Look up words in online dictionaries. Supports definitions, synonyms, antonyms, and rhymes with configurable URL templates.",
   "entryPoints": {
-    "main": "Main.qml",
-    "barWidget": "BarWidget.qml",
-    "panel": "Panel.qml",
+    "launcherProvider": "LauncherProvider.qml",
     "settings": "Settings.qml"
   },
   "dependencies": {
     "plugins": []
   },
   "metadata": {
+    "commandPrefix": "dict",
     "defaultSettings": {
       "definitionUrl": "https://www.powerthesaurus.org/{word}/definitions",
       "synonymsUrl": "https://www.powerthesaurus.org/{word}/synonyms",
       "antonymsUrl": "https://www.powerthesaurus.org/{word}/antonyms",
       "rhymesUrl": "https://www.powerthesaurus.org/{word}/rhymes",
-      "defaultCategory": "definition",
-      "closeAfterLookup": true
+      "defaultCategory": "definition"
     }
   }
 }
