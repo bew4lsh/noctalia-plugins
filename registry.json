@@ -12,6 +12,18 @@
       "minNoctaliaVersion": "3.9.0",
       "tags": ["Launcher", "Productivity"],
       "repository": "https://github.com/bew4lsh/noctalia-plugins"
+    },
+    {
+      "id": "kbd-backlight",
+      "name": "Keyboard Backlight",
+      "version": "1.0.0",
+      "official": false,
+      "author": "lia",
+      "description": "Control keyboard backlight brightness with a slider.",
+      "license": "MIT",
+      "minNoctaliaVersion": "4.4.0",
+      "tags": ["Bar", "Hardware"],
+      "repository": "https://github.com/bew4lsh/noctalia-plugins"
     }
   ]
 }
