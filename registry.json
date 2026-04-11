@@ -24,6 +24,18 @@
       "minNoctaliaVersion": "4.4.0",
       "tags": ["Bar", "Hardware"],
       "repository": "https://github.com/bew4lsh/noctalia-plugins"
+    },
+    {
+      "id": "package-tracking",
+      "name": "Package Tracking",
+      "version": "2.0.0",
+      "official": false,
+      "author": "lia",
+      "description": "Track shipping packages via DHL, FedEx, UPS, and USPS. View delivery status and checkpoint history from the bar.",
+      "license": "MIT",
+      "minNoctaliaVersion": "4.4.0",
+      "tags": ["Bar", "Productivity"],
+      "repository": "https://github.com/bew4lsh/noctalia-plugins"
     }
   ]
 }
