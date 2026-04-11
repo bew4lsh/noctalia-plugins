@@ -12,12 +12,18 @@ ColumnLayout {
     property var cfg: pluginApi?.pluginSettings || ({})
     property var defaults: pluginApi?.manifest?.metadata?.defaultSettings || ({})
 
-    property string editApiKey: cfg.apiKey || defaults.apiKey || ""
+    property string editDhlApiKey: cfg.carriers?.dhl?.apiKey ?? defaults.carriers?.dhl?.apiKey ?? ""
+    property string editFedexClientId: cfg.carriers?.fedex?.clientId ?? defaults.carriers?.fedex?.clientId ?? ""
+    property string editFedexClientSecret: cfg.carriers?.fedex?.clientSecret ?? defaults.carriers?.fedex?.clientSecret ?? ""
+    property string editUpsClientId: cfg.carriers?.ups?.clientId ?? defaults.carriers?.ups?.clientId ?? ""
+    property string editUpsClientSecret: cfg.carriers?.ups?.clientSecret ?? defaults.carriers?.ups?.clientSecret ?? ""
+    property string editUspsConsumerKey: cfg.carriers?.usps?.consumerKey ?? defaults.carriers?.usps?.consumerKey ?? ""
+    property string editUspsConsumerSecret: cfg.carriers?.usps?.consumerSecret ?? defaults.carriers?.usps?.consumerSecret ?? ""
     property int editRefreshInterval: cfg.refreshInterval ?? defaults.refreshInterval ?? 30
     property var editPackages: []
 
     property string newTrackingNumber: ""
-    property string newSlug: ""
+    property string newCarrier: "dhl"
     property string newLabel: ""
 
     Component.onCompleted: {
@@ -26,16 +32,15 @@ ColumnLayout {
     }
 
     function addPackage() {
-        if (root.newTrackingNumber === "" || root.newSlug === "") return;
+        if (root.newTrackingNumber === "" || root.newCarrier === "") return;
         var pkgs = root.editPackages.slice();
         pkgs.push({
             trackingNumber: root.newTrackingNumber,
-            slug: root.newSlug,
+            carrier: root.newCarrier,
             label: root.newLabel
         });
         root.editPackages = pkgs;
         root.newTrackingNumber = "";
-        root.newSlug = "";
         root.newLabel = "";
     }
 
@@ -60,16 +65,103 @@ ColumnLayout {
     }
 
     NLabel {
-        label: "AfterShip API"
-        description: "Get your API key from aftership.com/apps/api"
+        label: "DHL"
+        description: "Get your API key from developer.dhl.com"
     }
 
     NTextInput {
         Layout.fillWidth: true
         label: "API Key"
-        placeholderText: "Enter your AfterShip API key"
-        text: root.editApiKey
-        onTextChanged: root.editApiKey = text
+        placeholderText: "Enter your DHL API key"
+        text: root.editDhlApiKey
+        onTextChanged: root.editDhlApiKey = text
+    }
+
+    NDivider {
+        Layout.fillWidth: true
+        Layout.topMargin: Style.marginM
+        Layout.bottomMargin: Style.marginM
+    }
+
+    NLabel {
+        label: "FedEx"
+        description: "Get credentials from developer.fedex.com"
+    }
+
+    NTextInput {
+        Layout.fillWidth: true
+        label: "Client ID"
+        placeholderText: "Enter your FedEx client ID"
+        text: root.editFedexClientId
+        onTextChanged: root.editFedexClientId = text
+    }
+
+    NTextInput {
+        Layout.fillWidth: true
+        label: "Client Secret"
+        placeholderText: "Enter your FedEx client secret"
+        text: root.editFedexClientSecret
+        onTextChanged: root.editFedexClientSecret = text
+    }
+
+    NDivider {
+        Layout.fillWidth: true
+        Layout.topMargin: Style.marginM
+        Layout.bottomMargin: Style.marginM
+    }
+
+    NLabel {
+        label: "UPS"
+        description: "Get credentials from developer.ups.com"
+    }
+
+    NTextInput {
+        Layout.fillWidth: true
+        label: "Client ID"
+        placeholderText: "Enter your UPS client ID"
+        text: root.editUpsClientId
+        onTextChanged: root.editUpsClientId = text
+    }
+
+    NTextInput {
+        Layout.fillWidth: true
+        label: "Client Secret"
+        placeholderText: "Enter your UPS client secret"
+        text: root.editUpsClientSecret
+        onTextChanged: root.editUpsClientSecret = text
+    }
+
+    NDivider {
+        Layout.fillWidth: true
+        Layout.topMargin: Style.marginM
+        Layout.bottomMargin: Style.marginM
+    }
+
+    NLabel {
+        label: "USPS"
+        description: "Get credentials from developer.usps.com"
+    }
+
+    NTextInput {
+        Layout.fillWidth: true
+        label: "Consumer Key"
+        placeholderText: "Enter your USPS consumer key"
+        text: root.editUspsConsumerKey
+        onTextChanged: root.editUspsConsumerKey = text
+    }
+
+    NTextInput {
+        Layout.fillWidth: true
+        label: "Consumer Secret"
+        placeholderText: "Enter your USPS consumer secret"
+        text: root.editUspsConsumerSecret
+        onTextChanged: root.editUspsConsumerSecret = text
+    }
+
+    NDivider {
+        Layout.fillWidth: true
+        Layout.topMargin: Style.marginM
+        Layout.bottomMargin: Style.marginM
     }
 
     NComboBox {
@@ -126,7 +218,7 @@ ColumnLayout {
                     }
 
                     NText {
-                        text: modelData.slug.toUpperCase() + " " + modelData.trackingNumber
+                        text: modelData.carrier.toUpperCase() + " " + modelData.trackingNumber
                         color: Color.mSecondary
                     }
                 }
@@ -171,12 +263,19 @@ ColumnLayout {
         onTextChanged: root.newTrackingNumber = text
     }
 
-    NTextInput {
+    NComboBox {
         Layout.fillWidth: true
-        label: "Carrier Slug"
-        placeholderText: "e.g. usps, ups, fedex, dhl, amazon"
-        text: root.newSlug
-        onTextChanged: root.newSlug = text
+        label: "Carrier"
+
+        model: [
+            { key: "dhl", name: "DHL" },
+            { key: "fedex", name: "FedEx" },
+            { key: "ups", name: "UPS" },
+            { key: "usps", name: "USPS" }
+        ]
+
+        currentKey: root.newCarrier
+        onSelected: key => root.newCarrier = key
     }
 
     NTextInput {
@@ -212,7 +311,7 @@ ColumnLayout {
 
         MouseArea {
             anchors.fill: parent
-            cursorShape: root.newTrackingNumber !== "" && root.newSlug !== "" ? Qt.PointingHandCursor : Qt.ArrowCursor
+            cursorShape: root.newTrackingNumber !== "" ? Qt.PointingHandCursor : Qt.ArrowCursor
             onClicked: root.addPackage()
         }
     }
@@ -224,7 +323,12 @@ ColumnLayout {
     function saveSettings() {
         if (!pluginApi) return;
 
-        pluginApi.pluginSettings.apiKey = root.editApiKey;
+        pluginApi.pluginSettings.carriers = {
+            dhl: { apiKey: root.editDhlApiKey },
+            fedex: { clientId: root.editFedexClientId, clientSecret: root.editFedexClientSecret },
+            ups: { clientId: root.editUpsClientId, clientSecret: root.editUpsClientSecret },
+            usps: { consumerKey: root.editUspsConsumerKey, consumerSecret: root.editUspsConsumerSecret }
+        };
         pluginApi.pluginSettings.refreshInterval = root.editRefreshInterval;
         pluginApi.pluginSettings.packages = root.editPackages;
 

@@ -18,32 +18,51 @@ Item {
     property var cfg: pluginApi?.pluginSettings || ({})
     property var defaults: pluginApi?.manifest?.metadata?.defaultSettings || ({})
 
-    readonly property string apiKey: cfg.apiKey ?? defaults.apiKey ?? ""
+    readonly property var carriers: cfg.carriers ?? defaults.carriers ?? ({})
     readonly property var packages: cfg.packages ?? defaults.packages ?? []
     readonly property int refreshMinutes: cfg.refreshInterval ?? defaults.refreshInterval ?? 30
+    readonly property string scriptPath: Qt.resolvedUrl("tracker.py").toString().replace("file://", "")
 
     property var trackingData: ({})
     property int fetchIndex: -1
     property bool loading: false
     property int expandedIndex: -1
 
-    function statusLabel(tag) {
-        var labels = {
-            "Pending": "Pending",
-            "InfoReceived": "Info Received",
-            "InTransit": "In Transit",
-            "OutForDelivery": "Out for Delivery",
-            "AttemptFail": "Failed Attempt",
-            "Delivered": "Delivered",
-            "AvailableForPickup": "Ready for Pickup",
-            "Exception": "Exception",
-            "Expired": "Expired"
-        };
-        return labels[tag] || tag || "Unknown";
+    function hasCredentials(carrier) {
+        var creds = root.carriers[carrier];
+        if (!creds) return false;
+        if (carrier === "dhl") return creds.apiKey !== "";
+        if (carrier === "fedex" || carrier === "ups") return creds.clientId !== "" && creds.clientSecret !== "";
+        if (carrier === "usps") return creds.consumerKey !== "" && creds.consumerSecret !== "";
+        return false;
     }
 
-    function statusColor(tag) {
-        if (tag === "Delivered" || tag === "AvailableForPickup") return Color.mPrimary;
+    function credentialArgs(carrier) {
+        var creds = root.carriers[carrier];
+        if (!creds) return [];
+        if (carrier === "dhl") return ["--api-key", creds.apiKey];
+        if (carrier === "fedex") return ["--client-id", creds.clientId, "--client-secret", creds.clientSecret];
+        if (carrier === "ups") return ["--client-id", creds.clientId, "--client-secret", creds.clientSecret];
+        if (carrier === "usps") return ["--consumer-key", creds.consumerKey, "--consumer-secret", creds.consumerSecret];
+        return [];
+    }
+
+    function statusLabel(status) {
+        var labels = {
+            "pending": "Pending",
+            "info_received": "Info Received",
+            "in_transit": "In Transit",
+            "out_for_delivery": "Out for Delivery",
+            "delivered": "Delivered",
+            "failed_attempt": "Failed Attempt",
+            "exception": "Exception",
+            "unknown": "Unknown"
+        };
+        return labels[status] || status || "Unknown";
+    }
+
+    function statusColor(status) {
+        if (status === "delivered") return Color.mPrimary;
         return Color.mOnSurface;
     }
 
@@ -62,7 +81,7 @@ Item {
     }
 
     function fetchAll() {
-        if (root.apiKey === "" || root.packages.length === 0) return;
+        if (root.packages.length === 0) return;
         root.fetchIndex = 0;
         root.loading = true;
         fetchNext();
@@ -74,25 +93,27 @@ Item {
             return;
         }
         var pkg = root.packages[root.fetchIndex];
-        var url = "https://api.aftership.com/v4/trackings/" + pkg.slug + "/" + pkg.trackingNumber;
-        getProc.command = ["curl", "-s",
-                           "-H", "aftership-api-key: " + root.apiKey,
-                           "-H", "Content-Type: application/json",
-                           url];
-        getProc.running = true;
+        if (!root.hasCredentials(pkg.carrier)) {
+            root.fetchIndex++;
+            root.fetchNext();
+            return;
+        }
+        var cmd = ["python3", root.scriptPath, pkg.carrier, pkg.trackingNumber].concat(root.credentialArgs(pkg.carrier));
+        trackProc.command = cmd;
+        trackProc.running = true;
     }
 
     Component.onCompleted: fetchAll()
 
     Timer {
         interval: root.refreshMinutes * 60000
-        running: root.apiKey !== "" && root.packages.length > 0
+        running: root.packages.length > 0
         repeat: true
         onTriggered: root.fetchAll()
     }
 
     Process {
-        id: getProc
+        id: trackProc
         stdout: StdioCollector {
             onStreamFinished: {
                 var response;
@@ -103,50 +124,9 @@ Item {
                 }
 
                 var pkg = root.packages[root.fetchIndex];
-                var key = pkg.trackingNumber;
-
-                if (response.meta && response.meta.code === 4004) {
-                    var body = JSON.stringify({
-                        tracking: {
-                            tracking_number: pkg.trackingNumber,
-                            slug: pkg.slug,
-                            title: pkg.label || ""
-                        }
-                    });
-                    createProc.command = ["curl", "-s", "-X", "POST",
-                                          "-H", "aftership-api-key: " + root.apiKey,
-                                          "-H", "Content-Type: application/json",
-                                          "-d", body,
-                                          "https://api.aftership.com/v4/trackings"];
-                    createProc.running = true;
-                    return;
-                }
-
-                if (response.data && response.data.tracking) {
-                    var updated = Object.assign({}, root.trackingData);
-                    updated[key] = response.data.tracking;
-                    root.trackingData = updated;
-                }
-
-                root.fetchIndex++;
-                root.fetchNext();
-            }
-        }
-    }
-
-    Process {
-        id: createProc
-        stdout: StdioCollector {
-            onStreamFinished: {
-                var response;
-                try { response = JSON.parse(text); } catch (e) {}
-
-                if (response && response.data && response.data.tracking) {
-                    var pkg = root.packages[root.fetchIndex];
-                    var updated = Object.assign({}, root.trackingData);
-                    updated[pkg.trackingNumber] = response.data.tracking;
-                    root.trackingData = updated;
-                }
+                var updated = Object.assign({}, root.trackingData);
+                updated[pkg.trackingNumber] = response;
+                root.trackingData = updated;
 
                 root.fetchIndex++;
                 root.fetchNext();
@@ -208,15 +188,7 @@ Item {
             }
 
             NText {
-                visible: root.apiKey === ""
-                text: "Set your AfterShip API key in plugin settings."
-                color: Color.mSecondary
-                Layout.fillWidth: true
-                wrapMode: Text.Wrap
-            }
-
-            NText {
-                visible: root.apiKey !== "" && root.packages.length === 0
+                visible: root.packages.length === 0
                 text: "No packages tracked. Add packages in plugin settings."
                 color: Color.mSecondary
                 Layout.fillWidth: true
@@ -274,14 +246,14 @@ Item {
 
                                 NText {
                                     visible: packageDelegate.modelData.label !== ""
-                                    text: packageDelegate.modelData.slug.toUpperCase() + " " + packageDelegate.modelData.trackingNumber
+                                    text: packageDelegate.modelData.carrier.toUpperCase() + " " + packageDelegate.modelData.trackingNumber
                                     color: Color.mSecondary
                                 }
                             }
 
                             NText {
-                                text: packageDelegate.tracking ? root.statusLabel(packageDelegate.tracking.tag) : "..."
-                                color: packageDelegate.tracking ? root.statusColor(packageDelegate.tracking.tag) : Color.mSecondary
+                                text: packageDelegate.tracking ? root.statusLabel(packageDelegate.tracking.status) : "..."
+                                color: packageDelegate.tracking ? root.statusColor(packageDelegate.tracking.status) : Color.mSecondary
                             }
 
                             NIcon {
@@ -291,9 +263,15 @@ Item {
                         }
 
                         NText {
-                            visible: packageDelegate.tracking && packageDelegate.tracking.expected_delivery
-                            text: "Expected: " + (packageDelegate.tracking ? root.formatDate(packageDelegate.tracking.expected_delivery) : "")
+                            visible: packageDelegate.tracking && packageDelegate.tracking.estimatedDelivery
+                            text: "Expected: " + (packageDelegate.tracking ? root.formatDate(packageDelegate.tracking.estimatedDelivery) : "")
                             color: Color.mSecondary
+                        }
+
+                        NText {
+                            visible: packageDelegate.tracking && packageDelegate.tracking.error
+                            text: packageDelegate.tracking ? (packageDelegate.tracking.error || "") : ""
+                            color: Color.mError || Color.mSecondary
                         }
 
                         NDivider {
@@ -314,7 +292,7 @@ Item {
                                     spacing: Style.marginS
 
                                     NText {
-                                        text: root.formatCheckpointTime(modelData.checkpoint_time)
+                                        text: root.formatCheckpointTime(modelData.timestamp)
                                         color: Color.mSecondary
                                     }
 
