@@ -1,0 +1,26 @@
+{
+  "id": "package-tracking",
+  "name": "Package Tracking",
+  "version": "1.0.0",
+  "minNoctaliaVersion": "4.4.0",
+  "author": "lia",
+  "license": "MIT",
+  "description": "Track shipping packages via AfterShip. View delivery status and checkpoint history from the bar.",
+  "tags": ["Bar", "Productivity"],
+  "repository": "https://github.com/bew4lsh/noctalia-plugins",
+  "entryPoints": {
+    "barWidget": "BarWidget.qml",
+    "panel": "Panel.qml",
+    "settings": "Settings.qml"
+  },
+  "dependencies": {
+    "plugins": []
+  },
+  "metadata": {
+    "defaultSettings": {
+      "apiKey": "",
+      "refreshInterval": 30,
+      "packages": []
+    }
+  }
+}
